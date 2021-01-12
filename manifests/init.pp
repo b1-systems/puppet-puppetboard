@@ -26,7 +26,6 @@
 # @param experimental Enable experimental features.
 # @param revision Commit, tag, or branch from Puppetboard's Git repo to be used
 # @param manage_git If true, require the git package. If false do nothing.
-# @param manage_virtualenv If true, require the virtualenv package. If false do nothing.
 # @param python_version Python version to use in virtualenv.
 # @param virtualenv_dir Set location where virtualenv will be installed
 # @param manage_user If true, manage (create) this group. If false do nothing.
@@ -86,7 +85,6 @@ class puppetboard (
   Boolean $manage_user                                        = true,
   Boolean $manage_group                                       = true,
   Boolean $manage_git                                         = false,
-  Boolean $manage_virtualenv                                  = false,
   Stdlib::Absolutepath $virtualenv_dir                        = "${basedir}/virtenv-puppetboard",
   Integer[0] $reports_count                                   = 10,
   String[1] $default_environment                              = 'production',
@@ -181,7 +179,7 @@ class puppetboard (
       match   => ' app.run\(\'([\d\.]+)\'\)',
       require => [
         File["${basedir}/puppetboard"],
-        Python::Virtualenv["${basedir}/virtenv-puppetboard"]
+        Python::Pyvenv["${basedir}/virtenv-puppetboard"]
       ],
     }
   }
@@ -190,16 +188,6 @@ class puppetboard (
     package { 'git':
       ensure => installed,
     }
-  }
-
-  if $manage_virtualenv {
-    class { 'python':
-      virtualenv                => 'present',
-      manage_virtualenv_package => true,
-      version                   => $python_version,
-      dev                       => 'present',
-    }
-    Class['python'] -> Class['puppetboard']
   }
 
   if $manage_selinux {
